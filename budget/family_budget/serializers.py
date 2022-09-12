@@ -1,5 +1,5 @@
 from rest_framework import serializers, request
-from .models import Budget, BudgetShare, ExpenseTransaction, IncomeTransaction, Family
+from .models import Budget, ExpenseTransaction, IncomeTransaction, Family
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
@@ -73,26 +73,32 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
 
 class BudgetSerializer(serializers.ModelSerializer):
     family_name = serializers.ReadOnlyField(source='family.name')
+    owner = serializers.ReadOnlyField()
 
     class Meta:
         model = Budget
-        fields = ['id', 'name', 'creation_date', 'last_update', 'family', 'family_name']
+        fields = ['id', 'name', 'creation_date', 'last_update', 'family', 'family_name', 'users', 'owner']
+        extra_kwargs = {
+            'users': {'required': False}}
 
     def create(self, validated_data):
         user = self.context['request'].user
         user = User.objects.get(username=user)
-        budget = Budget(name=validated_data['name'], user=user, family=validated_data['family'])
+        another_users = validated_data['users']
+        another_users.append(user)
+        budget = Budget(name=validated_data['name'], owner=user.username, family=validated_data['family'])
         budget.save()
+        budget.users.set(another_users)
         return budget
 
 
 class BudgetDetailSerializer(serializers.ModelSerializer):
     family_name = serializers.ReadOnlyField(source='family.name')
-    username = serializers.ReadOnlyField(source='user.username')
+    users = UserSerializer(many=True)
 
     class Meta:
         model = Budget
-        fields = ['id', 'name', 'creation_date', 'last_update', 'family', 'family_name', 'user', 'username']
+        fields = ['id', 'name', 'creation_date', 'last_update', 'family', 'family_name', 'owner', 'users']
 
 
 class ExpenseTransactionSerializer(serializers.ModelSerializer):
@@ -100,28 +106,36 @@ class ExpenseTransactionSerializer(serializers.ModelSerializer):
         model = ExpenseTransaction
         fields = ['id', 'amount', 'category', 'budget', 'creation_date']
 
+    def create(self, validated_data):
+        user = self.context['request'].user
+        user = User.objects.get(username=user)
+        expense = ExpenseTransaction(amount=validated_data['amount'], user=user, budget=validated_data['budget'], category=validated_data['category'])
+        expense.save()
+        return expense
+
 
 class IncomeTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = IncomeTransaction
         fields = ['id', 'amount', 'category', 'budget', 'creation_date']
 
-
-class BudgetShareSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BudgetShare
-        fields = ['id', 'budget', 'user']
+    def create(self, validated_data):
+        user = self.context['request'].user
+        user = User.objects.get(username=user)
+        income = IncomeTransaction(amount=validated_data['amount'], user=user, budget=validated_data['budget'], category=validated_data['category'])
+        income.save()
+        return income
 
 
 class BudgetListSerializer(serializers.ModelSerializer):
     income = IncomeTransactionSerializer(many=True, read_only=True)
     expense = ExpenseTransactionSerializer(many=True, read_only=True)
     family_name = serializers.ReadOnlyField(source='family.name')
-    username = serializers.ReadOnlyField(source='user.username')
+    users = UserSerializer(many=True)
 
     class Meta:
         model = Budget
-        fields = ['id', 'name', 'creation_date', 'last_update', 'username', 'family', 'family_name', 'income', 'expense']
+        fields = ['id', 'name', 'creation_date', 'last_update', 'owner', 'users', 'family', 'family_name', 'income', 'expense']
 
 
 

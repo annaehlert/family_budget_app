@@ -15,15 +15,16 @@ class Budget(models.Model):
     name = models.CharField(max_length=200)
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
     last_update = models.DateTimeField("last update", auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.CharField(max_length=200)
     family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family')
+    users = models.ManyToManyField(User, related_name='budget_users', blank=True)
 
     def __str__(self):
         return self.name
 
 
 class IncomeTransaction(models.Model):
-    class Categories(models.TextChoices):
+    class IncomeCategories(models.TextChoices):
         OTHER = "Other"
         SALARY = "Salary"
         GIFT = "Gift"
@@ -31,8 +32,8 @@ class IncomeTransaction(models.Model):
 
     category = models.CharField(
         max_length=20,
-        choices=Categories.choices,
-        default=Categories.OTHER
+        choices=IncomeCategories.choices,
+        default=IncomeCategories.OTHER
     )
     amount = models.FloatField()
     budget = models.ForeignKey(
@@ -46,7 +47,7 @@ class IncomeTransaction(models.Model):
 
 class ExpenseTransaction(models.Model):
 
-    class Categories(models.TextChoices):
+    class ExpenseCategories(models.TextChoices):
         OTHER = 'Other'
         FOOD = "Food"
         HOUSING = "Housing"
@@ -62,8 +63,8 @@ class ExpenseTransaction(models.Model):
 
     category = models.CharField(
         max_length=20,
-        choices=Categories.choices,
-        default=Categories.OTHER
+        choices=ExpenseCategories.choices,
+        default=ExpenseCategories.OTHER
     )
     amount = models.FloatField()
     budget = models.ForeignKey(
@@ -75,7 +76,4 @@ class ExpenseTransaction(models.Model):
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
 
 
-class BudgetShare(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
 

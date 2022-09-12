@@ -21,8 +21,6 @@ from family_budget import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # API
     # USER
     path('api/users', views.UsersList.as_view()),
     path('api/user/create', views.UserCreate.as_view()),
@@ -35,8 +33,10 @@ urlpatterns = [
     path('api/budget/<pk>', views.UserBudgetList.as_view()),
     path('api/budget', views.BudgetCreate.as_view()),
     path('api/budgets', views.BudgetList.as_view()),
-    path('api/budget_shares', views.BudgetShareList.as_view()),
-
+    # INCOME
+    path('api/income_transaction', views.IncomeTransactionList.as_view()),
+    # EXPENSE
+    path('api/expense_transaction', views.ExpenseTransactionList.as_view()),
 
     path('api-auth/', include('rest_framework.urls')),
 

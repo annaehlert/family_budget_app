@@ -3,7 +3,7 @@ from .models import Budget, IncomeTransaction, ExpenseTransaction, Family
 from django.contrib.auth.models import User
 from .serializers import UserSerializer, BudgetSerializer, \
     ExpenseTransactionSerializer, IncomeTransactionSerializer, BudgetListSerializer, FamilySerializer, \
-    FamilyCreateSerializer
+    FamilyCreateSerializer, UpdateBudgetListSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from .permissions import IsOwnerOrReadOnly, IsOwnerOrReadOnlyForBudget
 from django_filters.rest_framework import DjangoFilterBackend
@@ -81,11 +81,19 @@ class BudgetCreate(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
 
-# GET, PUT, DELETE for specific budget
-class UserBudgetList(generics.RetrieveUpdateDestroyAPIView):
+# GET for specific budget
+class UserBudgetList(generics.RetrieveAPIView, generics.DestroyAPIView):
     queryset = Budget
     serializer_class = BudgetListSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnlyForBudget]
+    filter_backends = [DjangoFilterBackend]
+
+
+# PUT and DELETE for specific budget
+class UpdateBudgetListUser(generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Budget
+    serializer_class = UpdateBudgetListSerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
 
 

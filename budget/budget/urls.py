@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/budgets', views.BudgetList.as_view(), name='budgets_list'),
     path('api/budget/<pk>/income', views.SpecificBudgetIncomeList.as_view(), name='income-budget'),
     path('api/budget/<pk>/expense', views.SpecificBudgetExpenseList.as_view(), name='expense-budget'),
+    path('api/budget/<pk>/update', views.UpdateBudgetListUser.as_view(), name='update-budget'),
     # INCOME
     path('api/income_transaction', views.IncomeTransactionList.as_view(), name='income_create'),
     # EXPENSE

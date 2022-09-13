@@ -2,6 +2,7 @@ from rest_framework import serializers, request
 from .models import Budget, ExpenseTransaction, IncomeTransaction, Family
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
+import json
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -66,17 +67,20 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
         return family
 
     def validate(self, value):
-        name = value.get('name')
+        name = json.loads(value.get('name'))
         family_name = self.instance.name if self.instance else None
         users = self.instance.users.all() if self.instance else None
-        if name:
-            lower_name = name.lower()
-            if Family.objects.filter(name__iexact=lower_name).exists() and not self.instance:
-                raise serializers.ValidationError('This name already exists')
-            elif lower_name == family_name and value.get('users') == list(users):
-                raise serializers.ValidationError('This name already exists')
-            value['name'] = lower_name
-            return value
+        if not name:
+            raise serializers.ValidationError('No name provided.')
+        if not isinstance(name, str):
+            raise serializers.ValidationError('Name should be text.')
+        lower_name = name.lower()
+        if Family.objects.filter(name__iexact=lower_name).exists() and not self.instance:
+            raise serializers.ValidationError('This name already exists')
+        elif lower_name == family_name and value.get('users') == list(users):
+            raise serializers.ValidationError('This name already exists')
+        value['name'] = lower_name
+        return value
 
 
 class BudgetSerializer(serializers.ModelSerializer):
@@ -98,6 +102,25 @@ class BudgetSerializer(serializers.ModelSerializer):
         budget.save()
         budget.users.set(another_users)
         return budget
+
+    def validate(self, value):
+        name = json.loads(value.get('name'))
+        budget_name = self.instance.name if self.instance else None
+        users = self.instance.users.all() if self.instance else None
+        if not name:
+            raise serializers.ValidationError('No name provided.')
+        if not isinstance(name, str) and not isinstance(name, int):
+            raise serializers.ValidationError('Name should be text or int.')
+        if isinstance(name, str):
+            lower_name = name.lower()
+        else:
+            lower_name = name
+        if Family.objects.filter(name__iexact=lower_name).exists() and not self.instance:
+            raise serializers.ValidationError('This name already exists')
+        elif lower_name == budget_name and value.get('users') == list(users):
+            raise serializers.ValidationError('This name already exists')
+        value['name'] = lower_name
+        return value
 
 
 class BudgetDetailSerializer(serializers.ModelSerializer):
@@ -121,6 +144,14 @@ class ExpenseTransactionSerializer(serializers.ModelSerializer):
         expense.save()
         return expense
 
+    def validate(self, value):
+        amount = int(value.get('amount'))
+        if not amount:
+            raise serializers.ValidationError('No amount provided.')
+        if not isinstance(amount, int):
+            raise serializers.ValidationError('Name should be int.')
+        return value
+
 
 class IncomeTransactionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -134,17 +165,36 @@ class IncomeTransactionSerializer(serializers.ModelSerializer):
         income.save()
         return income
 
+    def validate(self, value):
+        amount = int(value.get('amount'))
+        if not amount:
+            raise serializers.ValidationError('No amount provided.')
+        if not isinstance(amount, int):
+            raise serializers.ValidationError('Name should be int.')
+        return value
+
 
 class BudgetListSerializer(serializers.ModelSerializer):
     income = IncomeTransactionSerializer(many=True, read_only=True)
     expense = ExpenseTransactionSerializer(many=True, read_only=True)
     family_name = serializers.ReadOnlyField(source='family.name')
-    users = UserSerializer(many=True)
+    owner = serializers.ReadOnlyField()
+    users = UserSerializer(many=True, read_only=True)
 
     class Meta:
         model = Budget
         fields = ['id', 'name', 'creation_date', 'last_update', 'owner', 'users', 'family', 'family_name', 'income', 'expense']
 
+
+class UpdateBudgetListSerializer(serializers.ModelSerializer):
+    income = IncomeTransactionSerializer(many=True, read_only=True)
+    expense = ExpenseTransactionSerializer(many=True, read_only=True)
+    family_name = serializers.ReadOnlyField(source='family.name')
+    owner = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Budget
+        fields = ['id', 'creation_date', 'last_update', 'owner', 'users', 'family_name', 'income', 'expense']
 
 
 

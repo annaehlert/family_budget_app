@@ -28,6 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This email already exists')
         return lower_email
 
+    def validate(self, value):
+        username = value.get('username')
+        password = value.get('password')
+        email = value.get('email')
+        if not username or not password or not email:
+            raise serializers.ValidationError('Username, password and email cannot be empty.')
+        return value
+
 
 class FamilySerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True)

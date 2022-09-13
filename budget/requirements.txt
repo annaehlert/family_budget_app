@@ -1,4 +1,6 @@
 djangorestframework==3.13.1
 Django==3.2.15
 django-filter==22.1
+virtualenv==20.4.6
+pytest-django==4.5.2
 

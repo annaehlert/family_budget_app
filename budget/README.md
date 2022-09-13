@@ -24,6 +24,8 @@ If you want to use Django admin:
 python manage.py runserver and going to "admin/" endpoint you will be able
 to login and work on data in database.
 
+To run tests you need to go to pytest.ini directory and run:
+ pytest --ds=budget.settings
 
 
 
